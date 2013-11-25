@@ -8,21 +8,24 @@ import ConfigParser
 import os 
 root = Tk() 
 root.title('System Configration System') 
-root.geometry('800x600') 
-t = Tkinter.Text(root,height=20,width=100,bg='grey',wrap = 'word' ) 
+root.geometry('1024x768') 
+text_up = Tkinter.Text(root,height=20,width=100,bg='grey',wrap = 'word') 
+#text_down = Tkinter.Text(root,height=20,width=100 )
+#text_down.tag_config('a',foreground = 'red')
+
+
 
 # global 
-CONF = 0
-
-
-
+CONF = 0 
+global NAME 
+NAME = "csc.cfg"
 
 def Readlogfile():
     """声明日志文件"""
     logfile = "/tmp/scs.log"
-
-def ConfigrationLoad(conf):
-    """配置文件赋值
+def ReadDefaultConfigrationFile():
+    global CONF
+    """声明默认配置文件
     默认配置文件样例
     [ssh_key]
     key_file = /tmp/ceshi
@@ -31,22 +34,25 @@ def ConfigrationLoad(conf):
     pub_key_mod = 644
     pri_key_mod = 600
     """
-    value = ";".join(["%s=%s" % (k, v) for k, v in conf.items()])
-    print "value = " + value
-    return value
-    
-def ReadDefaultConfigrationFile():
-    """声明默认配置文件"""
     config = ConfigParser.ConfigParser()
-    filename = "/tmp/csc.cfg"
+    filename = os.path.abspath('.') +'/' + NAME
     if filename and os.path.isfile(filename):
         config.readfp(open(filename,"rb"))
-        CONF = config.get("ssh_key","key_file")
-        print CONF 
+        CONF = {\
+            "file_name" : config.get("ssh_key","key_file"),\
+            "pub_key" : config.get("ssh_key","pub_key"),\
+            "pri_key" : config.get("ssh_key","pri_key"),\
+            "pub_key_mod" : config.get("ssh_key","pub_key_mod"),\
+            "pri_key_mod" : config.get("ssh_key","pri_key_mod"),\
+            }
+        #print CONF
+        return  CONF
     else:
-        print "File error"
+        w = Label(root,text="文件文件错误！") 
+        w.pack(side=TOP)
 
 def ReadConfigrationFile():
+    global CONF
     """声明配置文件"""
     t.delete(1.0, 'end') 
     fd = LoadFileDialog(root)
@@ -54,34 +60,47 @@ def ReadConfigrationFile():
     config = ConfigParser.ConfigParser()
     if filename and os.path.isfile(filename):
         config.readfp(open(filename,"rb"))
-        value = { "key_file":config.get("ssh_key","key_file")}
-        ConfigrationLoad(value)
+        #value = { "key_file":config.get("ssh_key","key_file")}
+        CONF = {\
+            "file_name" : config.get("ssh_key","key_file"),\
+            "pub_key" : config.get("ssh_key","pub_key"),\
+            "pri_key" : config.get("ssh_key","pri_key"),\
+            "pub_key_mod" : config.get("ssh_key","pub_key_mod"),\
+            "pri_key_mod" : config.get("ssh_key","pri_key_mod"),\
+            }  
+        return CONF
     else:
-        print "File error"
+        w = Label(root,text="文件错误！") 
+        w.pack(side=TOP)
         
 def SaveConfigrationFile():
     """存配置文件"""
     fd = SaveFileDialog(root) 
     filename= fd.go() 
     file = open(filename, 'w') 
-    content = t.get(1.0, END) 
+    content = text_up.get(1.0, END) 
     file.write(content) 
     file.close()   
 
 def CreateNewSSHKeyFile(): 
+    global CONF
     """生成新的KEY"""
-    t.delete(1.0, 'end') 
-    comm="ssh-keygen -f " + CONF.filename
-    print comm
-    #result = os.popen(comm).readlines() 
-    #t.insert(INSERT, "\n".join(result), "a") 
-
+    print CONF
+    comm="ssh-keygen -f " + CONF["file_name"]
+    #print comm
+    #if CONF["file_name"] and os.path.isfile(CONF["file_name"]):
+    if  os.path.isfile(CONF["file_name"]):
+        #print "文件已存在！"
+        text_up = Label(root,text="文件已存在！") 
+    else:
+        result = os.popen(comm).readlines() 
+        #text_up.insert(INSERT, "\n".join(result), "a")  
+        
 def LoadSSHKeyFile():
     """读取ssh_key"""
-    t.delete(1.0, 'dend')
-    if os.path.isfile(keyinfo.dir+keyinfo.name_pri):
+    if os.path.isfile(CONF["file_name"]):
         #load key
-        print keyinfo.file_dir + keyinfo.name_pri
+        print CONF["file_name"]
     else:
         print 'error'
         
@@ -89,39 +108,39 @@ def Default():
     print "null"
         
 def openfile(): 
-    t.delete(1.0, 'end') 
+    text_up.delete(1.0, 'end') 
     fd = LoadFileDialog(root) 
     filename = fd.go() 
     content = open(filename, 'r') 
     lines= content.readlines() 
     for line in lines: 
-        t.insert('end',line) 
+        text_up.insert('end',line) 
 #    file.close() 
 def savefile(): 
     fd = SaveFileDialog(root) 
     filename= fd.go() 
     file = open(filename, 'w') 
-    content = t.get(1.0, END) 
+    content = text_up.get(1.0, END) 
     file.write(content) 
     file.close() 
 def threads(): 
-    t.delete(1.0, 'end') 
+    text_up.delete(1.0, 'end') 
     result = os.popen('ps -ef | grep httpd | grep -v grep|wc -l').readlines() 
-    t.insert(INSERT, "\n".join(result), "a") 
+    text_up.insert(INSERT, "\n".join(result), "a") 
 def status(): 
-    t.delete(1.0, 'end') 
+    text_up.delete(1.0, 'end') 
     result = os.popen('sh status.sh').readlines() 
-    t.insert(INSERT, "\n".join(result), "a") 
+    text_up.insert(INSERT, "\n".join(result), "a") 
 def total(): 
-    t.delete(1.0, 'end') 
+    text_up.delete(1.0, 'end') 
     result = os.popen('sh conn.sh').readlines() 
-    t.insert(INSERT, "\n".join(result), "a") 
+    text_up.insert(INSERT, "\n".join(result), "a") 
 def start(): 
-    t.delete(1.0, 'end') 
+    text_up.delete(1.0, 'end') 
     result = os.popen('service httpd start').readlines() 
-    t.insert(INSERT, "\n".join(result), "a") 
+    text_up.insert(INSERT, "\n".join(result), "a") 
 def stop(): 
-    t.delete(1.0, 'end') 
+    text_up.delete(1.0, 'end') 
     result = os.popen('service httpd stop').readlines()     
     t.insert(INSERT, "\n".join(result), "a") 
 def restart(): 
@@ -134,8 +153,7 @@ def about():
     w.pack(side=TOP) 
  
 menubar = Menu(root) 
-ReadDefaultConfigrationFile
-()
+ReadDefaultConfigrationFile()
 filemenu = Menu(menubar,tearoff=0) 
 filemenu.add_command(label="打开新配置", command=ReadConfigrationFile)
 filemenu.add_command(label="读取默认配置", command=ReadDefaultConfigrationFile) 
@@ -146,7 +164,7 @@ menubar.add_cascade(label="文件", menu=filemenu)
 
 filemenu = Menu(menubar,tearoff=0) 
 filemenu.add_command(label="生成SSH_KEY", command=CreateNewSSHKeyFile)
-filemenu.add_command(label="读取SSH_KEY", command=Default) 
+filemenu.add_command(label="读取SSH_KEY", command=LoadSSHKeyFile) 
 filemenu.add_command(label="查看SSH_KEY", command=Default)
 filemenu.add_separator() 
 filemenu.add_command(label="查看机器列表", command=Default)
@@ -184,5 +202,7 @@ menubar.add_cascade(label="机器管理", menu=filemenu)
 root.config(menu=menubar) 
  
 #显示菜单 
-t.pack() 
+
+text_up.pack() 
+#text_down.pack()
 mainloop() 
